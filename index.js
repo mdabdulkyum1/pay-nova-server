@@ -4,6 +4,10 @@ const connectDB = require('./config/db');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors');
+
+// Import Routes
+const userRoutes = require('./routes/userRoutes');
 
 dotenv.config();
 
@@ -20,6 +24,7 @@ const io = new Server(server, {
 connectDB();
 
 app.use(express.json());
+app.use(cors());
 
 // Handle WebSocket Connection
 io.on('connection', (socket) => {
@@ -38,6 +43,10 @@ io.on('connection', (socket) => {
 });
 
 
+
+
+// Routes
+app.use("/api", userRoutes);
 
 
 
