@@ -8,7 +8,8 @@ const cors = require('cors');
 
 // Import Routes
 const userRoutes = require('./routes/userRoutes');
-const transactions = require('./routes/transactions')
+const transactions = require('./routes/transactions');
+const adminRoute = require('./routes/adminRoute')
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ io.on('connection', (socket) => {
 
 // Routes
 app.use("/api", userRoutes);
+app.use("/api", adminRoute);
 app.use("/api", transactions);
 
 

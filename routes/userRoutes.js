@@ -1,6 +1,8 @@
 const express = require('express');
 const { registerUser, loginUser, logoutUser } = require('../controllers/userController');
-const { getUser, getAdmin, getAllUsers } = require('../controllers/getUser');
+const { getUser, getAllUsers, getAdmin } = require('../controllers/getUser');
+
+
 const router = express.Router();
 const verifySession = require('../middlewares/verifySessionMid'); 
 const verifyAdmin = require('../middlewares/verifyAdmin'); 
@@ -11,7 +13,9 @@ router.post('/logout', verifySession, logoutUser);
 
 
 router.get("/auth/me", verifySession, getUser); 
-router.get("/users/role/:email", verifySession, verifyAdmin,  getAdmin); 
 router.get("/users", verifySession, verifyAdmin,  getAllUsers); 
+router.get("/users/role/:email", verifySession, getAdmin); 
+
+
 
 module.exports = router;

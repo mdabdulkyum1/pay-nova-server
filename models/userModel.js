@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   pin: { type: String, required: true },
   mobile: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  role: { type: String, enum: ['user', 'agent', 'admin'], default: 'user' },
+  role: { type: String, enum: ['user', 'agent',], default: 'user' },
   nid: { type: String, required: true, unique: true },
   photoURL: { type: String, default: null },
   session: { type: String, default: null }, // Stores active session

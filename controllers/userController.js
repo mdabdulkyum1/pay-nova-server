@@ -1,6 +1,7 @@
 
 const { v4: uuidv4 } = require('uuid'); 
 const User = require('../models/userModel');
+const Admin = require("../models/adminModel");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -54,46 +55,53 @@ const registerUser = async (req, res) => {
     }
 };
 
-
-
 const loginUser = async (req, res) => {
     try {
         const { email, pin, mobile } = req.body;
 
-        // Find user by email or mobile
-        const user = await User.findOne({ email }) || await User.findOne({ mobile });
-   
+        // Check if user exists in User or Admin collection
+        let user = await User.findOne({ email }) || await User.findOne({ mobile });
+  
+        let role = "user"; // Default role
 
-        // Check if user exists and pin matches
+        if (!user) {
+            user = await Admin.findOne({ email }) || await Admin.findOne({ mobile });
+            if (user) role = user.role; // If found in Admin collection, assign role as "admin"
+        }
+
+        // If user is not found in either collection
         if (!user || !(await bcrypt.compare(pin, user.pin))) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid login credentials',
+                message: "Invalid login credentials",
             });
         }
 
         // Generate session using UUID
-        const sessionToken = uuidv4(); // Generate a unique session ID
+        const sessionToken = uuidv4(); 
 
         // Update user session in the database
         user.session = sessionToken;
         await user.save();
 
-        // Generate JWT token including user id and session
-        const token = jwt.sign({ id: user._id, session: sessionToken }, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRED || '7d', // Default to 7 days if not set
-        });
+        // Generate JWT token including user ID, session, and role
+        const token = jwt.sign(
+            { id: user._id, session: sessionToken, role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRED || "7d" }
+        );
 
-        // Send the response with user data, token, and session
+        // Send the response with user/admin data
         return res.status(200).json({
             success: true,
-            message: 'User logged in successfully',
+            message: `user logged in successfully`,
             data: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                session: sessionToken, // Include session info
-                token, // JWT with session
+                role, // Include role in response
+                session: sessionToken, 
+                token, 
             },
         });
 
@@ -101,31 +109,43 @@ const loginUser = async (req, res) => {
         console.error("Login Error:", error);
         return res.status(500).json({
             success: false,
-            message: 'User login failed',
+            message: "Login failed",
             error: error.message,
         });
     }
 };
 
-
 const logoutUser = async (req, res) => {
     try {
-        const user = req.user; // This comes from the 'verifySession' middleware
+        const { id } = req.user; // Extract user ID from request (provided by `verifySession` middleware)
 
-        // Clear the session or update it to indicate the user is logged out
-        user.session = null; // or set session to another value (e.g., an empty string)
-        await user.save(); // Save the user object to the database
+        // Check if the user exists in either Users or Admins collection
+        let user = await User.findById(id);
+        let role = "user"; // Default role
 
-        // Respond back with a success message
+        if (!user) {
+            user = await Admin.findById(id);
+            if (user) role = "admin"; // If found in Admin collection, set role
+        }
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Clear session/token
+        user.session = null;
+        await user.save();
+
         return res.status(200).json({
             success: true,
-            message: "User logged out successfully",
+            message: `${role.charAt(0).toUpperCase() + role.slice(1)} logged out successfully`,
         });
+
     } catch (error) {
         console.error("Logout error:", error);
         return res.status(500).json({
             success: false,
-            message: "Error logging out user",
+            message: "Error logging out",
             error: error.message,
         });
     }
