@@ -5,19 +5,19 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 
-
 const registerUser = async (req, res) => {
     try {
-        const {
-            name,
-            pin,
-            mobile,
-            email,
-            role,
-            nid,
-            photoURL,
-            session
-        } = req.body;
+        const { name, pin, mobile, email, role, nid, photoURL, session } = req.body;
+
+        // Check if the mobile number or email is already registered
+        const existingUser = await User.findOne({ $or: [{ mobile }, { email }] });
+
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: "User with this mobile number or email already exists",
+            });
+        }
 
         // Hash the PIN
         const hashedPassword = await bcrypt.hash(pin, 10);
@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
             nid,
             photoURL,
             session,
-            amount: 40 
+            amount: 40,
         });
 
         // Save user to the database
@@ -41,7 +41,7 @@ const registerUser = async (req, res) => {
         res.status(201).json({
             success: true,
             message: "User registered successfully with 40 Taka bonus",
-            data: newUserInfo
+            data: newUserInfo,
         });
 
     } catch (error) {
@@ -49,10 +49,11 @@ const registerUser = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "User registration failed",
-            error: error.message
+            error: error.message,
         });
     }
 };
+
 
 
 const loginUser = async (req, res) => {
