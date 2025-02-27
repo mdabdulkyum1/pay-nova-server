@@ -13,7 +13,7 @@ router.post('/logout', verifySession, logoutUser);
 
 
 router.get("/auth/me", verifySession, getUser); 
-router.get("/users", verifySession, verifyAdmin,  getAllUsers); 
+router.get("/users", verifySession, getAllUsers); 
 router.get("/users/role/:email", verifySession, getAdmin); 
 
 

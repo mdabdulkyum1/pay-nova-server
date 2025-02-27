@@ -18,7 +18,7 @@ const verifySession = async (req, res, next) => {
 
         if (!user) {
             user = await Admin.findById(decoded.id);
-            if (user) role = "admin";
+            if (user) role = user.role;
         }
 
         if (!user || user.session !== decoded.session) {
@@ -27,6 +27,7 @@ const verifySession = async (req, res, next) => {
 
         req.user = user; // Attach user/admin info to the request
         req.user.role = role; // Attach role info (user or admin)
+
         next();
     } catch (error) {
         return res.status(401).json({ success: false, message: "Unauthorized", error: error.message });

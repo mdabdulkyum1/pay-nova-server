@@ -6,7 +6,6 @@ const getUser = async (req, res) => {
   try {
     // Get token from headers
     const token = req.headers.authorization?.split(" ")[1];
-    console.log(token)
 
     if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -14,8 +13,6 @@ const getUser = async (req, res) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    console.log(decoded)
 
     // Check user role and find user in respective collection
     let user = await User.findById(decoded.id).select("-pin"); // Exclude PIN field
@@ -36,7 +33,8 @@ const getUser = async (req, res) => {
         id: user._id, 
         name: user.name, 
         email: user.email, 
-        role // Include user role in response
+        role, // Include user role in response
+        amount: user.amount || user.totalIncome
       } 
     });
 
@@ -79,7 +77,7 @@ const getAllUsers = async (req, res) => {
   try {
     // Fetch all users from the database
     const users = await User.find().select("-pin"); // Exclude password for security
-console.log(users)
+
     res.status(200).json({ success: true, users });
   } catch (error) {
     console.error("Error fetching users:", error);
